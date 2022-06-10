@@ -63,3 +63,5 @@ Please take some time to answer the following questions. Your answers should go 
 
   - Judging how closely to match the UI to the design. I opted for ease of devopment over pixel-perfect.
   - The data sets don't seem to have much in terms of evolution states. I played with the `fetchEvolutionChainById` a bit, but I didn't have an `ID` to leverage, and when I passed in the pokemon name, it didn't like that.
+
+All finished on the `main` branch :)
