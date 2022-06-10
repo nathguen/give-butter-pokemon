@@ -1,70 +1,77 @@
+import React, { useMemo } from "react";
 import { useEffect, useState } from "react";
 import { fetchAllPokemon } from "./api";
+import { PokemonDetails } from "./components/PokemonDetails";
+import { PokemonList } from "./components/PokemonList";
+import { ResultsWrapper } from "./styles";
+import { Pokemon } from "./types";
 
 function App() {
-    const [pokemonIndex, setPokemonIndex] = useState([])
-    const [pokemon, setPokemon] = useState([])
-    const [searchValue, setSearchValue] = useState('')
-    const [pokemonDetails, setPokemonDetails] = useState()
+  const [pokemonList, setPokemonList] = useState<Pokemon.Summary[]>([]);
+  const [searchValue, setSearchValue] = useState("");
+  const [selectedPokemon, setSelectedPokemon] = useState("");
 
-    useEffect(() => {
-        const fetchPokemon = async () => {
-            const {results: pokemonList} = await fetchAllPokemon()
+  const refreshPokemonList = () => {
+    const fetchPokemonList = async () => {
+      const { results: pokemonList } = await fetchAllPokemon();
 
-            setPokemon(pokemonList)
-            setPokemonIndex(pokemonList)
-        }
+      setPokemonList(pokemonList);
+    };
 
-        fetchPokemon().then(() => {
-            /** noop **/
-        })
-    }, [searchValue])
+    fetchPokemonList().then(() => {
+      /** noop **/
+    });
+  };
 
-    const onSearchValueChange = (event) => {
-        const value = event.target.value
-        setSearchValue(value)
+  useEffect(() => {
+    // fetch all the pokemon to start
+    refreshPokemonList();
+  }, []);
 
-        setPokemon(
-            pokemonIndex.filter(monster => !monster.name.includes(value))
-        )
+  const filteredPokemonList = useMemo(() => {
+    if (searchValue === "") {
+      return pokemonList;
     }
 
-    const onGetDetails = (name) => async () => {
-        /** code here **/
-    }
-
-    return (
-        <div className={'pokedex__container'}>
-            <div className={'pokedex__search-input'}>
-                <input value={searchValue} onChange={onSearchValueChange} placeholder={'Search Pokemon'}/>
-            </div>
-            <div className={'pokedex__content'}>
-                {pokemon.length > 0 && (
-                    <div className={'pokedex__search-results'}>
-                        {
-                            pokemon.map(monster => {
-                                return (
-                                    <div className={'pokedex__list-item'} key={monster.name}>
-                                        <div>
-                                            {monster.name}
-                                        </div>
-                                        <button onClick={onGetDetails(monster.name)}>Get Details</button>
-                                    </div>
-                                )
-                            })
-                        }
-                    </div>
-                )}
-                {
-                    pokemonDetails && (
-                        <div className={'pokedex__details'}>
-                            {/*  code here  */}
-                        </div>
-                    )
-                }
-            </div>
-        </div>
+    const loweredSearchValue = searchValue.toLowerCase();
+    return pokemonList.filter((p) =>
+      p.name.toLowerCase().includes(loweredSearchValue)
     );
+  }, [searchValue, pokemonList]);
+
+  useEffect(() => {
+    // refresh list if a given pokemon isn't found
+    if (filteredPokemonList.length === 0) {
+      refreshPokemonList();
+    }
+  }, [searchValue]);
+
+  const onSearchValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchValue(value);
+  };
+
+  return (
+    <div className={"pokedex__container"}>
+      <div className={"pokedex__search-input"}>
+        <input
+          value={searchValue}
+          onChange={onSearchValueChange}
+          placeholder={"Search Pokemon"}
+        />
+      </div>
+
+      <ResultsWrapper>
+        <PokemonList
+          list={filteredPokemonList}
+          onSelectPokemon={(pokemonName) => setSelectedPokemon(pokemonName)}
+          selectedPokemon={selectedPokemon}
+        />
+
+        <PokemonDetails pokemonName={selectedPokemon} />
+      </ResultsWrapper>
+    </div>
+  );
 }
 
 export default App;
